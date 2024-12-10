@@ -4,8 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    @vite('resources/css/app.css')
     <title>Document</title>
 </head>
 
@@ -14,7 +13,7 @@
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <img src="https://via.placeholder.com/40" alt="logo"class="w-10 h-10">
+                    <img src="{{ asset('images/LOGO_HMIF.png') }}" alt="logo" class="w-10 h-10">
                 </div>
                 <div class="hidden md:flex space-x-4">
                     @foreach ($links as $link)
@@ -25,7 +24,11 @@
                     @endforeach
                 </div>
                 <div class="flex items-center">
-                    <img src="https://via.placeholder.com/40" alt="logo"class="w-10 h-10">
+                    <a href="{{ route('profile.edit') }}">
+                        <div class="w-10 h-10 flex items-center justify-center text-xl text-white bg-gray-700 rounded-full cursor-pointer">
+                            🏠
+                        </div>
+                    </a>
                 </div>
             </div>
         </div>
