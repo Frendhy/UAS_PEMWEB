@@ -13,7 +13,9 @@
         <div class="container mx-auto px-4">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center">
-                    <img src="{{ asset('images/LOGO_HMIF.png') }}" alt="logo" class="w-10 h-10">
+                    <a href="{{route('hmifpage')}}">
+                    <img src="{{ asset('img/Logo-HMIF.png') }}" alt="logo" class="w-10 h-10">
+                    </a>
                 </div>
                 <div class="hidden md:flex space-x-4">
                     @foreach ($links as $link)

@@ -1,6 +1,7 @@
 @extends('layouts.admin')
 
 @section('content')
+
 <head>
     <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
@@ -58,6 +59,18 @@
         <h2 class="text-gray-800 text-2xl font-bold mb-6">Add New Task</h2>
         <form id="add-task-form" method="POST">
             @csrf
+
+            <div class="mb-4">
+                <label for="division_id" class="block text-gray-700 font-bold mb-2">Division</label>
+                <select name="division_id" id="division_id"
+                    class="w-full border-gray-300 border rounded-lg p-3 focus:ring-blue-500 focus:border-blue-500"
+                    required>
+                    @foreach ($divisions as $division)
+                        <option value="{{ $division->id }}">{{ $division->divisi_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
             <div class="mb-4">
                 <label for="title" class="block text-gray-700 font-bold mb-2">Title</label>
                 <input type="text" name="title" id="title"
@@ -107,53 +120,46 @@
     });
 
     form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const formData = new FormData(form);
+    e.preventDefault();
+    const formData = new FormData(form);
 
-        console.log("Sending fetch request to /tasks with formData:", Object.fromEntries(formData));
+    try {
+        const response = await fetch('/tasks', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: formData,
+        });
 
-        try {
-            const response = await fetch('/tasks', {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                },
-                body: formData,
-            });
-
-            console.log("Response status:", response.status);
-
-            if (!response.ok) {
-                const errorResponse = await response.json();
-                console.error('Server response error:', errorResponse);
-                throw new Error(errorResponse.error || 'Failed to submit form');
-            }
-
-            const task = await response.json();
-            console.log('Task added successfully:', task);
-
-            const listId = task.status === 'done' ? 'done-list'
-                            : task.status === 'in_progress' ? 'inprogress-list'
-                            : 'notyet-list';
-
-            const container = document.getElementById(listId);
-
-            const newTask = document.createElement('div');
-            newTask.className = 'bg-white p-4 rounded-lg shadow hover:shadow-lg transition';
-            newTask.innerHTML = `
-                <h3 class="font-bold text-lg text-gray-800">${task.title}</h3>
-                <p class="text-gray-600">${task.description}</p>
-            `;
-            container.appendChild(newTask);
-
-            form.reset();
-            modal.classList.add('hidden');
-            modal.classList.remove('flex');
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to add task');
+        if (!response.ok) {
+            throw new Error('Failed to submit form');
         }
-    });
-</script>
 
+        const task = await response.json();
+
+        const listId = task.status === 'done' ? 'done-list'
+                        : task.status === 'in_progress' ? 'inprogress-list'
+                        : 'notyet-list';
+
+        const container = document.getElementById(listId);
+
+        const newTask = document.createElement('div');
+        newTask.className = 'bg-white p-4 rounded-lg shadow hover:shadow-lg transition';
+        newTask.innerHTML = `
+            <h3 class="font-bold text-lg text-gray-800">${task.title}</h3>
+            <p class="text-gray-600">${task.description}</p>
+        `;
+        container.appendChild(newTask);
+
+        form.reset();
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to add task');
+    }
+});
+
+</script>
 @endsection

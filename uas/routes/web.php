@@ -3,41 +3,58 @@
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\PasswordController;
 use App\Http\Controllers\EventController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\ChatController;
 
-Route::middleware(['auth'])->group(function () {
-    Route::post('/tasks', [TaskController::class, 'store'])->name('tasks.store');
-});
+Route::post('/tasks', [TaskController::class, 'store']); 
 
+Route::get('/hmifpage', [HomeController::class, 'index'])->name('hmifpage');
 
 Route::resource('event', EventController::class);
 Route::get('events/list', [EventController::class, 'listEvent'])->name('event.list');
 
 
 Route::middleware(['auth'])->group(function () {
-    // Show the change password form
     Route::get('change-password', [PasswordController::class, 'edit'])->name('password.change');
-    
-    // Handle the change password form submission
     Route::post('change-password', [PasswordController::class, 'update'])->name('password.change.store');
 });
 
-
 Route::get('/', function () {
+    if (Auth::check()) {
+        $roleId = auth()->user()->role_id;
+
+        if ($roleId == 1) {
+            return redirect()->route('admin.home');
+        } elseif ($roleId == 2) {
+            return redirect()->route('user.home');
+        }
+    }
     return view('auth.login');
-});
+})->name('login');
+
+Route::get('/login', function () {
+    if (Auth::check()) {
+        $roleId = auth()->user()->role_id;
+
+        if ($roleId == 1) {
+            return redirect()->route('admin.home');
+        } elseif ($roleId == 2) {
+            return redirect()->route('user.home');
+        }
+    }
+    return view('auth.login');
+})->name('login');
 
 Route::get('/dashboard', function () {
     $roleId = auth()->user()->role_id;
 
-    // Redirect based on the role_id
     if ($roleId == 1) {
-        // Admin role
         return redirect()->route('admin.home');
     } elseif ($roleId == 2) {
-        // User role
         return redirect()->route('user.home');
     }
 })->middleware(['auth', 'verified'])->name('dashboard');
@@ -64,8 +81,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return view('event');
     })->name('calendar');
 
-    Route::get('/todo', [TaskController::class, 'adminTodo'])->name('todo');
+    Route::post('/tasks', [TaskController::class, 'store']); 
 
+    Route::get('/todo', [TaskController::class, 'adminTodo'])->name('todo'); 
+    
     Route::get('/message', function () {
         return view('admin.message_admin');
     })->name('message');
@@ -90,6 +109,9 @@ Route::prefix('user')->name('user.')->group(function () {
         return view('user.message_user');
     })->name('message');
 });
+
+Route::post('/messages', [ChatController::class, 'store'])->middleware('auth');
+Route::get('/messages', [ChatController::class, 'index'])->middleware('auth');
 
 
 require __DIR__.'/auth.php';

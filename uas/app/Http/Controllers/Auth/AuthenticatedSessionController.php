@@ -8,6 +8,8 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
+use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Hash;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -19,34 +21,29 @@ class AuthenticatedSessionController extends Controller
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
 {
-    // Authenticate the user
-    $request->authenticate();
+    $request->validate([
+        'email' => 'required|email|max:255',
+        'password' => 'required', 
+    ]);
 
-    $request->session()->regenerate();
+    $user = \App\Models\User::where('email', $request->email)->first();
 
-    $roleId = auth()->user()->role_id;
+    if ($user && Hash::check($request->password, $user->password)) {
+        Auth::login($user);
 
-    // Redirect based on the role_id
-    if ($roleId == 1) {
-        // Admin role
-        return redirect()->route('admin.home');
-    } elseif ($roleId == 2) {
-        // User role
-        return redirect()->route('user.home');
+        $roleId = $user->role_id;
+        if ($roleId == 1) {
+            return redirect()->route('admin.home');
+        } elseif ($roleId == 2) {
+            return redirect()->route('user.home');
+        }
     }
 
-    return redirect()->route('auth.login');
+    return back()->withErrors(['email' => 'The provided credentials are incorrect.'])->withInput();
 }
 
-
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

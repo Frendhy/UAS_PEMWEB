@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Division; // Import the Division model
-use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Http\RedirectResponse;
+use App\Models\Division; 
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\Hash;
 
 class ProfileController extends Controller
 {
@@ -17,7 +17,7 @@ class ProfileController extends Controller
     public function edit()
     {
         $user = auth()->user();
-        $divisions = Division::all(); // Fetch divisions from the database
+        $divisions = Division::all(); 
         return view('profile.edit', compact('user', 'divisions'));
     }
 
@@ -28,46 +28,43 @@ class ProfileController extends Controller
 
     $request->validate([
         'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email,' . $user->id,
-        'division_id' => 'nullable|exists:divisions,id',
-        'birthday' => 'nullable|date',
-        'password' => 'nullable|string|confirmed|min:8',
+        'email' => 'required|email|max:255',
+        'division_id' => 'required|integer',
+        'birthday' => 'required|date',
+        'role_id' => 'required|integer',
+        'password' => 'required', 
     ]);
 
-    // Update user information
+    if (!Hash::check($request->password, $user->password)) {
+        return back()->withErrors(['password' => 'The provided password is incorrect.']);
+    }
+
     $user->name = $request->name;
     $user->email = $request->email;
     $user->division_id = $request->division_id;
     $user->birthday = $request->birthday;
-
-    if ($request->filled('password')) {
-        $user->password = bcrypt($request->password);
-    }
+    $user->role_id = $request->role_id;
 
     $user->save();
 
     return redirect()->route('profile.edit')->with('status', 'Profile updated successfully!');
 }
 
+public function destroy(Request $request): RedirectResponse
+{
+    $request->validateWithBag('userDeletion', [
+        'password' => ['required', 'current_password'],
+    ]);
 
-    /**
-     * Delete the user's account.
-     */
-    public function destroy(Request $request): RedirectResponse
-    {
-        $request->validateWithBag('userDeletion', [
-            'password' => ['required', 'current_password'],
-        ]);
+    $user = $request->user();
 
-        $user = $request->user();
+    Auth::logout();
 
-        Auth::logout();
+    $user->delete();
 
-        $user->delete();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return Redirect::to('/');
-    }
+    return Redirect::to('/');
+}
 }

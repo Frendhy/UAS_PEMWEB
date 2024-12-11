@@ -14,7 +14,6 @@
         <!-- Title -->
         <h1 class="text-center text-2xl font-bold text-black mb-6">Login</h1>
 
-        <!-- Login Form -->
         <form method="POST" action="{{ route('login') }}">
             @csrf
 

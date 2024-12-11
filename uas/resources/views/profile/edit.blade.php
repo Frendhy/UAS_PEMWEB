@@ -14,8 +14,8 @@
     <div class="w-full max-w-2xl p-6 bg-gray-200 rounded-md shadow-md border border-gray-300">
         <div>
             <?php
-            $role_id = auth()->user()->role_id;
-            $redirectRoute = $role_id === 1 ? route('admin.home') : route('user.home');
+$role_id = auth()->user()->role_id;
+$redirectRoute = $role_id === 1 ? route('admin.home') : route('user.home');
             ?>
             <a href="{{ $redirectRoute }}"
                 class="bg-blue-500 text-white px-3 py-2 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -82,17 +82,11 @@
 
             <!-- Password -->
             <div class="mb-4">
-                <input id="password" type="password" name="password" placeholder="Password (leave blank if unchanged)"
-                    class="w-full px-4 py-2 text-sm border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input id="password" type="password" name="password"
+                    placeholder="Enter your current password to confirm changes"
+                    class="w-full px-4 py-2 text-sm border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
-            </div>
-
-            <!-- Confirm Password -->
-            <div class="mb-4">
-                <input id="password_confirmation" type="password" name="password_confirmation"
-                    placeholder="Confirm Password"
-                    class="w-full px-4 py-2 text-sm border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
-                <x-input-error :messages="$errors->get('password_confirmation')" class="mt-2" />
             </div>
 
             <!-- Buttons -->
