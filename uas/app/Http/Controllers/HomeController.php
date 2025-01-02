@@ -6,8 +6,8 @@ use Illuminate\Http\Request;
 
 class HomeController extends Controller
 {
-    public function index()
+    public function show()
     {
-        return view('hmifpage'); // This will load the `resources/views/hmifpage.blade.php`
+        return view('hmifpage');
     }
 }
