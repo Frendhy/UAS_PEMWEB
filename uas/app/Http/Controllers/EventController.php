@@ -2,19 +2,21 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\EventRequest;
 use App\Models\Event;
 use Illuminate\Http\Request;
 
 class EventController extends Controller
 {
-
+    /**
+     * Display a listing of the resource.
+     */
     public function index()
     {
         return view('event');
     }
-    /**
-     * Display a listing of the resource.
-     */public function listEvent(Request $request)
+
+    public function listEvent(Request $request)
     {
         $start = date('Y-m-d', strtotime($request->start));
         $end = date('Y-m-d', strtotime($request->end));
@@ -36,21 +38,17 @@ class EventController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create(Event $events)
+    public function create(Event $event)
     {
-        return view('eventform', ['data' => $events, 'action' => route('event.store')]);
+        return view('event-form', ['data' => $event, 'action' => route('events.store')]);
     }
-    
-
-
-
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(EventRequest $request, Event $event)
     {
-        //
+        return $this->update($request, $event);
     }
 
     /**
@@ -66,15 +64,28 @@ class EventController extends Controller
      */
     public function edit(Event $event)
     {
-        //
+        return view('event-form', ['data' => $event, 'action' => route('events.update', $event->id)]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Event $event)
+    public function update(EventRequest $request, Event $event)
     {
-        //
+        if ($request->has('delete')) {
+            return $this->destroy($event);
+        }
+        $event->start_date = $request->start_date;
+        $event->end_date = $request->end_date;
+        $event->title = $request->title;
+        $event->category = $request->category;
+
+        $event->save();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Save data successfully'
+        ]);
     }
 
     /**
@@ -82,6 +93,10 @@ class EventController extends Controller
      */
     public function destroy(Event $event)
     {
-        //
+        $event->delete();
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Delete data successfully'
+        ]);
     }
-}
+}   
