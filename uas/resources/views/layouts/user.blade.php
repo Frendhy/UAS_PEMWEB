@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     @vite('resources/css/app.css')
     <title>User Panel</title>
+    @if(!auth()->check())
+        <script>
+            window.location.href = "{{ route('login') }}";
+        </script>
+    @endif
 </head>
 <body>
     <x-navbar :title="'User Panel'" :links="[
         ['label' => 'Home', 'url' => route('user.home')],
-        ['label' => 'To Do List', 'url' => route('user.todo')],
+        ['label' => 'To Do List', 'url' => route('user.division')],
         ['label' => 'Message', 'url' => route('user.message')],
         ['label' => 'Calendar', 'url' => route('user.calendar')],
         ['label' => 'Logout', 'url' => '#', 'onclick' => 'event.preventDefault(); document.getElementById(\'logout-form\').submit();']
