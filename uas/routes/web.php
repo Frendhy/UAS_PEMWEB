@@ -9,14 +9,20 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\TaskController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\TaskCommentController;
 
+Route::post('/tasks/{taskId}/comments', [TaskCommentController::class, 'store'])->name('tasks.comments.store');
 Route::post('/tasks', [TaskController::class, 'store']); 
+Route::get('/tasks/{id}', [TaskController::class, 'show']);
+Route::put('/tasks/{id}', [TaskController::class, 'update']);
+Route::delete('/tasks/{id}', [TaskController::class, 'destroy']);
+Route::post('/tasks/{task}/update-status', [TaskController::class, 'updateStatus'])->name('tasks.update-status');
+Route::get('/tasks/{taskId}', [TaskController::class, 'showTaskDetails']);
 
-Route::get('/hmifpage', [HomeController::class, 'index'])->name('hmifpage');
+Route::get('/hmifpage', [HomeController::class, 'show'])->name('hmifpage');
 
-Route::resource('event', EventController::class);
-Route::get('events/list', [EventController::class, 'listEvent'])->name('event.list');
-
+Route::get('events/list', [EventController::class, 'listEvent'])->name('events.list');
+Route::resource('events', EventController::class);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('change-password', [PasswordController::class, 'edit'])->name('password.change');
@@ -81,6 +87,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         return view('event');
     })->name('calendar');
 
+    Route::get('/division', function () {
+        return view('admin.division_admin');
+    })->name('division');
+
+    Route::get('/division', [TaskController::class, 'showDivisionsAdmin'])->name('division');
+
     Route::post('/tasks', [TaskController::class, 'store']); 
 
     Route::get('/todo', [TaskController::class, 'adminTodo'])->name('todo'); 
@@ -103,6 +115,13 @@ Route::prefix('user')->name('user.')->group(function () {
         return view('event');
     })->name('calendar');
 
+
+    Route::get('/division', function () {
+        return view('user.division_user');
+    })->name('division');
+
+    Route::get('/division', [TaskController::class, 'showDivisionsUser'])->name('division');
+    
     Route::get('/todo', [TaskController::class, 'userTodo'])->name('todo');
 
     Route::get('/message', function () {
@@ -112,8 +131,6 @@ Route::prefix('user')->name('user.')->group(function () {
 
 Route::post('/messages', [ChatController::class, 'store'])->middleware('auth');
 Route::get('/messages', [ChatController::class, 'index'])->middleware('auth');
-Route::delete('/messages', [ChatController::class, 'clear'])->middleware('auth');
-
 
 
 require __DIR__.'/auth.php';

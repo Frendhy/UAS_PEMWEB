@@ -29,10 +29,10 @@
                        autocomplete="username"
                        value="{{ old('email') }}" />
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
-            </div>
+            </div> 
 
             <!-- Password -->
-            <div class="mb-2">
+            <div class="mb-4">
                 <input id="password" 
                        type="password" 
                        name="password" 
@@ -43,8 +43,26 @@
                 <x-input-error :messages="$errors->get('password')" class="mt-2" />
             </div>
 
+            <!-- Custom CAPTCHA -->
+            <div class="mb-4">
+                @php
+                    $captcha = \Illuminate\Support\Str::random(8);
+                @endphp
+                <div class="flex items-center justify-between">
+                    <span class="font-mono text-lg font-bold">{{ $captcha }}</span>
+                </div>
+                <input id="captcha" 
+                       type="text" 
+                       name="captcha" 
+                       placeholder="Enter CAPTCHA" 
+                       class="w-full px-4 py-2 text-sm border border-gray-400 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                       required />
+                <input type="hidden" name="captcha_expected" value="{{ $captcha }}">
+                <x-input-error :messages="$errors->get('captcha')" class="mt-2" />
+            </div>
+
             <!-- Forgot Password Link -->
-            <div class="text-right mb-4">
+            <div class="text-right mb-4">   
                 @if (Route::has('password.request'))
                     <a href="{{ route('password.request') }}" class="text-sm text-blue-700 hover:underline">Lupa Password?</a>
                 @endif

@@ -3,12 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\View\View;
-use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Facades\Hash;
 
 class AuthenticatedSessionController extends Controller
@@ -16,35 +13,41 @@ class AuthenticatedSessionController extends Controller
     /**
      * Display the login view.
      */
-    public function create(): View
+    public function create()
     {
         return view('auth.login');
     }
 
-    public function store(Request $request): RedirectResponse
-{
-    $request->validate([
-        'email' => 'required|email|max:255',
-        'password' => 'required', 
-    ]);
+    /**
+     * Handle the login request.
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+            'captcha' => 'required',
+            'captcha_expected' => 'required',
+        ]);
 
-    $user = \App\Models\User::where('email', $request->email)->first();
-
-    if ($user && Hash::check($request->password, $user->password)) {
-        Auth::login($user);
-
-        $roleId = $user->role_id;
-        if ($roleId == 1) {
-            return redirect()->route('admin.home');
-        } elseif ($roleId == 2) {
-            return redirect()->route('user.home');
+        if ($request->input('captcha') !== $request->input('captcha_expected')) {
+            return back()->withErrors(['captcha' => 'Invalid CAPTCHA. Please try again.'])->withInput();
         }
+
+        if (Auth::attempt($request->only('email', 'password'))) {
+            $request->session()->regenerate();
+            return redirect()->intended('dashboard'); 
+        }
+
+        return back()->withErrors([
+            'email' => 'The provided credentials do not match our records.',
+        ]);
     }
 
-    return back()->withErrors(['email' => 'The provided credentials are incorrect.'])->withInput();
-}
-
-    public function destroy(Request $request): RedirectResponse
+    /**
+     * Logout the user.
+     */
+    public function destroy(Request $request)
     {
         Auth::guard('web')->logout();
 

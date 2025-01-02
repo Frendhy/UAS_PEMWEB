@@ -23,14 +23,6 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->registerPolicies();
-        //admin buat create
-        Gate::define('create-book', function(User $user){
-            return $user->role_id === 1;
-        });
 
-        Gate::define('update-book', function(User $user, Book $book){
-            return $user->id === $book->user_id;
-        });
     }
 }
