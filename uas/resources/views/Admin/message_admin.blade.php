@@ -11,6 +11,10 @@
         <input type="text" id="chat-input" class="border p-2 w-full" placeholder="Type your message here...">
         <button type="submit" class="mt-2 bg-blue-500 text-white p-2 rounded">Send</button>
     </form>
+
+    <div id="alert" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+        Message sent successfully!
+    </div>
 </div>
 
 <script>
@@ -23,8 +27,6 @@
             return;
         }
 
-        console.log('Message:', message);
-
         fetch('/messages', {
             method: 'POST',
             headers: {
@@ -33,14 +35,13 @@
             },
             body: JSON.stringify({ message: message })
         }).then(response => {
-            console.log('Response status:', response.status); // Log response status
             if (!response.ok) {
                 throw new Error('Network response was not ok: ' + response.statusText);
             }
             return response.json();
         }).then(data => {
-            console.log('Response data:', data); // Log the response to console
             document.getElementById('chat-input').value = '';
+            showAlert();
             loadMessages();
         }).catch(error => {
             console.error('There was a problem with the fetch operation:', error);
@@ -48,35 +49,69 @@
     });
 
     function loadMessages() {
-    fetch('/messages')
-        .then(response => {
-            console.log('Load messages response status:', response.status);
-            if (!response.ok) {
-                throw new Error('Network response was not ok: ' + response.statusText);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log('Load messages data:', data); // Log load messages data
-            const chatBox = document.getElementById('chat-box');
-            chatBox.innerHTML = '';
-            data.forEach(message => {
-                const messageElement = document.createElement('div');
-                messageElement.classList.add('p-2', 'border', 'mb-2');
-                messageElement.textContent = message.message_text;
-                chatBox.appendChild(messageElement);
+        const currentUserId = {{ auth()->id() }};
+        fetch('/messages')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                const chatBox = document.getElementById('chat-box');
+                chatBox.innerHTML = '';
+                data.forEach(message => {
+                    const messageElement = document.createElement('div');
+                    const isCurrentUser = message.sender_id === currentUserId;
+
+                    messageElement.classList.add('p-2', 'border', 'mb-2', 'rounded');
+                    messageElement.classList.add(isCurrentUser ? 'bg-blue-100' : 'bg-gray-100');
+                    messageElement.style.textAlign = isCurrentUser ? 'right' : 'left';
+
+                    const header = document.createElement('div');
+                    header.textContent = `${message.sender_name}`;
+                    header.classList.add('font-bold', 'mb-1');
+
+                    const time = document.createElement('div');
+                    time.textContent = message.sent_at;
+                    time.classList.add('text-sm', 'text-gray-500');
+
+                    const body = document.createElement('div');
+                    body.textContent = message.message_text;
+                    body.classList.add('mt-1');
+
+                    if (isCurrentUser) {
+                        messageElement.style.marginLeft = 'auto';
+                    } else {
+                        messageElement.style.marginRight = 'auto';
+                    }
+
+                    messageElement.appendChild(header);
+                    messageElement.appendChild(body);
+                    messageElement.appendChild(time);
+
+                    chatBox.appendChild(messageElement);
+                });
+
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('There was a problem with loading messages:', error);
             });
-            chatBox.scrollTop = chatBox.scrollHeight;
-        })
-        .catch(error => {
-            console.error('There was a problem with loading messages:', error);
-        });
-}
+    }
 
-setInterval(loadMessages, 3000); // Refresh every 3 seconds
+    function showAlert() {
+        const alert = document.getElementById('alert');
+        alert.classList.remove('hidden');
+        alert.classList.add('block');
 
-loadMessages(); // Load messages initially
+        setTimeout(() => {
+            alert.classList.add('hidden');
+            alert.classList.remove('block');
+        }, 3000);
+    }
 
-
+    setInterval(loadMessages, 3000);
+    loadMessages();
 </script>
 @endsection

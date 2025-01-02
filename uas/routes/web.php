@@ -112,6 +112,8 @@ Route::prefix('user')->name('user.')->group(function () {
 
 Route::post('/messages', [ChatController::class, 'store'])->middleware('auth');
 Route::get('/messages', [ChatController::class, 'index'])->middleware('auth');
+Route::delete('/messages', [ChatController::class, 'clear'])->middleware('auth');
+
 
 
 require __DIR__.'/auth.php';
