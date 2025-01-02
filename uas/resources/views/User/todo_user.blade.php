@@ -1,131 +1,176 @@
 @extends('layouts.user')
 
 @section('content')
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-11/12 mx-auto mt-10">
-        <!-- Done Column -->
-        <div class="bg-blue-500 rounded-lg shadow-lg p-6">
-            <h2 class="text-white text-2xl font-semibold mb-6">✅ Done</h2>
-            <div id="done-list" class="space-y-4">
-                @foreach ($tasksGrouped['done'] ?? [] as $task)
-                    <div class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition task-item" data-title="{{ $task->title }}" data-status="Done">
-                        <h3 class="font-bold text-lg text-gray-800">{{ $task->title }}</h3>
-                        <p class="text-gray-600">{{ $task->description }}</p>
-                    </div>
-                @endforeach
-            </div>
-        </div>
+<div class="w-11/12 mx-auto mt-10">
+    <!-- Header -->
+    <h1 class="text-2xl font-bold text-blue-600 mb-6">
+        {{ $currentDivision->divisi_name ?? 'All Divisions' }}
+    </h1>
 
-        <!-- In Progress Column -->
-        <div class="bg-orange-500 rounded-lg shadow-lg p-6">
-            <h2 class="text-white text-2xl font-semibold mb-6">⏳ In Progress</h2>
-            <div id="inprogress-list" class="space-y-4">
-                @foreach ($tasksGrouped['in_progress'] ?? [] as $task)
-                    <div class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition task-item" data-title="{{ $task->title }}" data-status="In Progress">
-                        <h3 class="font-bold text-lg text-gray-800">{{ $task->title }}</h3>
-                        <p class="text-gray-600">{{ $task->description }}</p>
-                    </div>
-                @endforeach
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <?php
+        $statuses = [
+            'done' => ['title' => '✅ Done', 'color' => 'bg-blue-500'],
+            'in_progress' => ['title' => '⏳ In Progress', 'color' => 'bg-orange-500'],
+            'not_yet' => ['title' => '🛑 Not Yet', 'color' => 'bg-red-500'],
+        ];
+        ?>
+        @foreach ($statuses as $status => $config)
+        <div id="{{ $status }}-list" class="{{ $config['color'] }} rounded-lg shadow-lg p-6 task-category" data-status="{{ $status }}">
+            <h2 class="text-white text-2xl font-semibold mb-6">{{ $config['title'] }}</h2>
+            <div class="space-y-4">
+                @forelse ($tasksGrouped[$status] as $task)
+                <div class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition task-item" draggable="true"
+                    data-id="{{ $task->id }}" data-title="{{ $task->title }}" data-deadline="{{ $task->deadline }}">
+                    <h3 class="font-bold text-lg text-gray-800">{{ $task->title }}</h3>
+                    <p class="text-gray-600">{{ $task->description }}</p>
+                </div>
+                @empty
+                @endforelse
             </div>
         </div>
-
-        <!-- Not Yet Column -->
-        <div class="bg-red-500 rounded-lg shadow-lg p-6">
-            <h2 class="text-white text-2xl font-semibold mb-6">🛑 Not Yet</h2>
-            <div id="notyet-list" class="space-y-4">
-                @foreach ($tasksGrouped['not_yet'] ?? [] as $task)
-                    <div class="bg-white p-4 rounded-lg shadow hover:shadow-lg transition task-item" data-title="{{ $task->title }}" data-status="Not Yet">
-                        <h3 class="font-bold text-lg text-gray-800">{{ $task->title }}</h3>
-                        <p class="text-gray-600">{{ $task->description }}</p>
-                    </div>
-                @endforeach
+        @endforeach
+        <!-- Comment and Upload Modal -->
+        @foreach ($tasks as $task)
+        <div id="comment-upload-modal-{{ $task->id }}" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden comment-upload-modal">
+            <div class="bg-white w-2/3 p-6 rounded-lg shadow-xl flex relative">
+                <!-- Left Side: Task Details -->
+                <div class="w-1/2 pr-4 border-r">
+                    <h2 class="text-2xl font-semibold mb-4">Task Details</h2>
+                    <p id="modal-status-{{ $task->id }}" class="text-gray-600 mb-2">Status: {{ $task->status }}</p>
+                    <p id="modal-title-{{ $task->id }}" class="text-gray-800 font-semibold mb-2">Title: {{ $task->title }}</p>
+                    <p id="modal-deadline-{{ $task->id }}" class="text-gray-600 mb-4">Deadline: {{ $task->deadline }}</p>
+                </div>
+                <!-- Right Side: Comment and Upload -->
+                <div class="w-1/2 pl-4">
+                    <!-- Form Section -->
+                    <form id="comment-upload-form-{{ $task->id }}" method="POST" enctype="multipart/form-data" class="flex flex-col h-full">
+                        @csrf
+                        <!-- Chatbox Input -->
+                        <div class="flex items-center bg-gray-100 border border-gray-300 rounded-lg p-4 space-x-4">
+                            <!-- File Input -->
+                            <label class="flex items-center justify-center w-10 h-10 bg-gray-200 rounded-full cursor-pointer hover:bg-gray-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-paperclip" viewBox="0 0 16 16">
+                                    <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z" />
+                                </svg>
+                                <input type="file" name="file" class="hidden" id="task-file-{{ $task->id }}">
+                            </label>
+                            <!-- Textarea -->
+                            <textarea name="comment" class="flex-grow p-2 bg-transparent focus:outline-none resize-none" placeholder="Add a comment" rows="1"></textarea>
+                            <!-- Submit Button -->
+                            <button type="submit" class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center hover:bg-blue-700 transition-all">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-7-7l7 7-7 7" />
+                                </svg>
+                            </button>
+                        </div>
+                        <!-- Comments Section -->
+                        <div id="task-comments-{{ $task->id }}" class="mt-6 flex-grow h-64 overflow-y-auto">
+                            <h3 class="text-sm font-bold text-blue-600">Comments</h3>
+                            @forelse ($task->comments as $comment)
+                            <div class="p-4 bg-gray-100 rounded-lg shadow mb-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <p class="font-bold text-gray-800">{{ $comment->user->name }}</p>
+                                    <p class="text-sm text-gray-500">{{ \Carbon\Carbon::parse($comment->created_at)->timezone('Asia/Bangkok')->format('d M Y, H:i') }}</p>
+                                </div>
+                                <p class="text-gray-700 mb-2">{{ $comment->comment }}</p>
+                                @if ($comment->file_path)
+                                <a href="{{ asset('storage/' . $comment->file_path) }}" target="_blank" class="text-blue-500 hover:underline">📎 View Attachment</a>
+                                @endif
+                            </div>
+                            @empty
+                            <p class="text-gray-500">No comments yet.</p>
+                            @endforelse
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
+        @endforeach
     </div>
+</div>
 
-    <!-- Comment Modal -->
-    <div id="comment-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white w-1/3 p-6 rounded-lg shadow-xl">
-            <h2 class="text-2xl font-semibold mb-4 text-center">Submissions Status</h2>
-            <p id="modal-status" class="text-gray-600 mb-2">Status: </p>
-            <p id="modal-title" class="text-gray-800 font-semibold mb-4">Title: </p>
-            <textarea class="w-full p-3 border border-gray-300 rounded-lg mb-4" placeholder="Add a comment" rows="4"></textarea>
-            <div class="flex justify-end space-x-2">
-                <button id="close-comment-modal" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-all">Cancel</button>
-                <button id="open-file-modal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all">Add Submissions</button>
-            </div>
-        </div>
-    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        initDragAndDrop();
 
-    <!-- File Upload Modal -->
-    <div id="file-upload-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white w-1/3 p-6 rounded-lg shadow-xl">
-            <h2 class="text-xl font-semibold mb-4">Upload File</h2>
-            <p class="text-sm text-gray-500 mb-4">Choose only 1 file</p>
-            <label class="block w-full border border-gray-300 rounded-lg p-4 text-center cursor-pointer bg-gray-100 hover:bg-gray-200">
-                <span class="font-semibold text-gray-700">Select from Drive</span>
-                <input type="file" class="hidden" id="task-file">
-            </label>
-            <div class="flex justify-end space-x-2">
-                <button id="close-file-modal" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition-all">Cancel</button>
-                <button id="add-file" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-all">Add</button>
-            </div>
-        </div>
-    </div>
+        // Open Modal
+        document.querySelectorAll('.task-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const taskId = this.dataset.id;
+                const title = this.dataset.title;
+                const status = this.closest('.task-category').dataset.status;
+                const deadline = this.dataset.deadline;
 
-    <!-- Submissions Successful Modal -->
-    <div id="submission-success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
-        <div class="bg-white w-1/3 p-6 rounded-lg text-center shadow-xl">
-            <p class="text-xl font-semibold mb-4">Submissions Successful!</p>
-            <button id="close-success-modal" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-all">Okay</button>
-        </div>
-    </div>
+                const modal = document.getElementById(`comment-upload-modal-${taskId}`);
+                if (!modal) {
+                    console.error(`Modal for task ID ${taskId} not found.`);
+                    return;
+                }
 
-    <script>
-    // Show Comment Modal
-    document.querySelectorAll('.task-item').forEach(item => {
-        item.addEventListener('click', function() {
-            const title = this.dataset.title;
-            const status = this.dataset.status;
+                modal.querySelector(`#modal-title-${taskId}`).innerText = `Title: ${title}`;
+                modal.querySelector(`#modal-status-${taskId}`).innerText = `Status: ${status}`;
+                modal.querySelector(`#modal-deadline-${taskId}`).innerText = `Deadline: ${deadline}`;
+                modal.querySelector(`#comment-upload-form-${taskId}`).action = `/tasks/${taskId}/comments`;
 
-            // Populate modal content
-            document.getElementById('modal-title').innerText = `Title: ${title}`;
-            document.getElementById('modal-status').innerText = `Status: ${status}`;
-
-            // Show modal
-            document.getElementById('comment-modal').classList.remove('hidden');
+                modal.classList.remove('hidden');
+            });
+        });
+        // Close Modal on Outside Click
+        document.querySelectorAll('.comment-upload-modal').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
         });
     });
+    // Initialize drag-and-drop functionality (if required)
+    function initDragAndDrop() {
+        document.querySelectorAll('.task-item').forEach(task => {
+            task.addEventListener('dragstart', function(e) {
+                e.dataTransfer.setData('task-id', this.dataset.id);
+            });
+        });
 
-    // Close Comment Modal
-    document.getElementById('close-comment-modal').addEventListener('click', function() {
-        document.getElementById('comment-modal').classList.add('hidden');
-    });
+        document.querySelectorAll('.task-category').forEach(category => {
+            category.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
 
-    // Open File Upload Modal
-    document.getElementById('open-file-modal').addEventListener('click', function() {
-        document.getElementById('comment-modal').classList.add('hidden');
-        document.getElementById('file-upload-modal').classList.remove('hidden');
-    });
+            category.addEventListener('drop', function(e) {
+                e.preventDefault();
+                const taskId = e.dataTransfer.getData('task-id');
+                const newStatus = this.dataset.status;
 
-    // Close File Upload Modal
-    document.getElementById('close-file-modal').addEventListener('click', function() {
-        document.getElementById('file-upload-modal').classList.add('hidden');
-    });
+                const taskElement = document.querySelector(`.task-item[data-id="${taskId}"]`);
+                this.querySelector('.space-y-4').appendChild(taskElement);
 
-    // Handle File Upload
-    document.getElementById('add-file').addEventListener('click', function() {
-        // Hide all modals first
-        document.getElementById('comment-modal').classList.add('hidden');
-        document.getElementById('file-upload-modal').classList.add('hidden');
+                updateTaskStatus(taskId, newStatus);
+            });
+        });
+    }
 
-        // Show success modal
-        document.getElementById('submission-success-modal').classList.remove('hidden');
-    });
-
-    // Close Submission Success Modal
-    document.getElementById('close-success-modal').addEventListener('click', function() {
-        document.getElementById('submission-success-modal').classList.add('hidden');
-    });
+    function updateTaskStatus(taskId, newStatus) {
+        fetch(`/tasks/${taskId}/update-status`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    status: newStatus
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log(`Task ${taskId} updated to ${newStatus}`);
+                } else {
+                    console.error('Failed to update task status');
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
 </script>
-
 @endsection

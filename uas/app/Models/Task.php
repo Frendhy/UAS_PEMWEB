@@ -9,5 +9,16 @@ class Task extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['title', 'description', 'status', 'division_id'];
+    protected $fillable = [
+        'title',
+        'description',
+        'status',
+        'division_id',
+        'deadline', // Tambahkan deadline
+    ];
+
+    public function comments()
+{
+    return $this->hasMany(TaskComment::class);
+}
 }
