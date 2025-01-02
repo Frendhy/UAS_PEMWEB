@@ -18,6 +18,7 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
         $divisions = Division::all(); 
+        
         return view('profile.edit', compact('user', 'divisions'));
     }
 
